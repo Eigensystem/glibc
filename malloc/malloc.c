@@ -3884,7 +3884,7 @@ _int_malloc (mstate av, size_t bytes)
           bck = victim->bk;
           size = chunksize (victim);
           mchunkptr next = chunk_at_offset (victim, size);
-
+          //!2.28版本后对于unsorted bin attack的检测处于固定状态
           if (__glibc_unlikely (size <= CHUNK_HDR_SZ)
               || __glibc_unlikely (size > av->system_mem))
             malloc_printerr ("malloc(): invalid size (unsorted)");
