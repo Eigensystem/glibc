@@ -3735,7 +3735,12 @@ _int_malloc (mstate av, size_t bytes)
           bck = victim->bk;
           size = chunksize (victim);
           mchunkptr next = chunk_at_offset (victim, size);
-
+          
+          //!相对于前版本加入了：
+          //!   1.对地址相邻后方chunk的size检测
+          //!   2.对prev_size和size域匹配的检测
+          //!   3.对victim -> bk -> fd == victim的检测
+          //!   4.对prev_inuse位的检测
           if (__glibc_unlikely (size <= 2 * SIZE_SZ)
               || __glibc_unlikely (size > av->system_mem))
             malloc_printerr ("malloc(): invalid size (unsorted)");
@@ -3744,6 +3749,8 @@ _int_malloc (mstate av, size_t bytes)
             malloc_printerr ("malloc(): invalid next size (unsorted)");
           if (__glibc_unlikely ((prev_size (next) & ~(SIZE_BITS)) != size))
             malloc_printerr ("malloc(): mismatching next->prev_size (unsorted)");
+          //!此处导致无法通过修改unsorted bin中chunk的bk指针来将任意地址上数据修改成较大数据(如global_max_fast)
+          //!2.28之前版本均可
           if (__glibc_unlikely (bck->fd != victim)
               || __glibc_unlikely (victim->fd != unsorted_chunks (av)))
             malloc_printerr ("malloc(): unsorted double linked list corrupted");
