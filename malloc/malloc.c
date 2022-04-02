@@ -3464,9 +3464,11 @@ _int_malloc (mstate av, size_t bytes)
   for (;; )
     {
       int iters = 0;
+      //unsorted bin遍历，将其中chunk归位到对应bin中
       while ((victim = unsorted_chunks (av)->bk) != unsorted_chunks (av))
         {
           bck = victim->bk;
+          //!仅对size进行检测
           if (__builtin_expect (victim->size <= 2 * SIZE_SZ, 0)
               || __builtin_expect (victim->size > av->system_mem, 0))
             malloc_printerr (check_action, "malloc(): memory corruption",
