@@ -3472,7 +3472,7 @@ _int_malloc (mstate av, size_t bytes)
           if (__builtin_expect (victim->size <= 2 * SIZE_SZ, 0)
               || __builtin_expect (victim->size > av->system_mem, 0))
             malloc_printerr (check_action, "malloc(): memory corruption",
-                             chunk2mem (victim), av);
+                            chunk2mem (victim), av);
           size = chunksize (victim);
 
           /*
@@ -3482,7 +3482,7 @@ _int_malloc (mstate av, size_t bytes)
              exception to best-fit, and applies only when there is
              no exact fit for a small chunk.
            */
-
+          //last remainder操作
           if (in_smallbin_range (nb) &&
               bck == unsorted_chunks (av) &&
               victim == av->last_remainder &&
@@ -3511,7 +3511,9 @@ _int_malloc (mstate av, size_t bytes)
               return p;
             }
 
-          /* remove from unsorted list */
+          //!无检测，直接对被拿取出的chunk的bkchunk的fd域进行修改
+          //unsorted_chunks (av)->bk = unsorted_chunks (av)->bk->bk
+          //unsorted_chunks (av)->bk->fd = unsorted_chunks (av)
           unsorted_chunks (av)->bk = bck;
           bck->fd = unsorted_chunks (av);
 
