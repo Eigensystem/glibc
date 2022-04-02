@@ -3793,7 +3793,7 @@ _int_malloc (mstate av, size_t bytes)
               return p;
             }
 
-          /* remove from unsorted list */
+          //!再次指针合法性检测
           if (__glibc_unlikely (bck->fd != victim))
             malloc_printerr ("malloc(): corrupted unsorted chunks 3");
           unsorted_chunks (av)->bk = bck;
