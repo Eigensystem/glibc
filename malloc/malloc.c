@@ -3757,7 +3757,7 @@ _int_malloc (mstate av, size_t bytes)
            */
 
           if (in_smallbin_range (nb) &&
-              bck == unsorted_chunks (av) &&
+              bck == unsorted_chunk (av) &&
               victim == av->last_remainder &&
               (unsigned long) (size) > (unsigned long) (nb + MINSIZE))
             {
@@ -4340,7 +4340,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 	not placed into regular bins until after they have
 	been given one chance to be used in malloc.
       */
-
+    //!chunk放入unsorted bin流程中存在有对unsorted bin中第一个chunk和unsorted bin表头指针的检测
       bck = unsorted_chunks(av);
       fwd = bck->fd;
       if (__glibc_unlikely (fwd->bk != bck))
