@@ -3518,7 +3518,7 @@ _int_malloc (mstate av, size_t bytes)
           bck->fd = unsorted_chunks (av);
 
           /* Take now instead of binning if exact fit */
-
+          //若size符合则直接从unsorted bin中取用
           if (size == nb)
             {
               set_inuse_bit_at_offset (victim, size);
