@@ -3792,29 +3792,28 @@ _int_malloc (mstate av, size_t bytes)
 
           if (size == nb)
             {
-              set_inuse_bit_at_offset (victim, size);
-              if (av != &main_arena)
-		set_non_main_arena (victim);
-#if USE_TCACHE
-	      /* Fill cache first, return to user only if cache fills.
-		 We may return one of these chunks later.  */
-	      if (tcache_nb
-		  && tcache->counts[tc_idx] < mp_.tcache_count)
-		{
-		  tcache_put (victim, tc_idx);
-		  return_cached = 1;
-		  continue;
-		}
-	      else
-		{
-#endif
-              check_malloced_chunk (av, victim, nb);
-              void *p = chunk2mem (victim);
-              alloc_perturb (p, bytes);
-              return p;
-#if USE_TCACHE
-		}
-#endif
+                set_inuse_bit_at_offset (victim, size);
+                if (av != &main_arena)
+                    set_non_main_arena (victim);
+            #if USE_TCACHE
+            /* Fill cache first, return to user only if cache fills.
+		        We may return one of these chunks later.  */
+                if (tcache_nb && tcache->counts[tc_idx] < mp_.tcache_count)
+                {
+                    tcache_put (victim, tc_idx);
+                    return_cached = 1;
+                    continue;
+                }
+                else
+                {
+            #endif
+                check_malloced_chunk (av, victim, nb);
+                void *p = chunk2mem (victim);
+                alloc_perturb (p, bytes);
+                return p;
+            #if USE_TCACHE
+            }
+            #endif
             }
 
           /* place chunk in bin */
