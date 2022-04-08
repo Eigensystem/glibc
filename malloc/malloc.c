@@ -3743,16 +3743,16 @@ _int_malloc (mstate av, size_t bytes)
                     bck = victim->bk;
                     if (__builtin_expect (chunksize_nomask (victim) <= 2 * SIZE_SZ, 0)
                             || __builtin_expect (chunksize_nomask (victim)
-				     > av->system_mem, 0))
+							> av->system_mem, 0))
                         malloc_printerr ("malloc(): memory corruption");
                     size = chunksize (victim);
 
                     /*
-                         If a small request, try to use last remainder if it is the
-                         only chunk in unsorted bin.    This helps promote locality for
-                         runs of consecutive small requests. This is the only
-                         exception to best-fit, and applies only when there is
-                         no exact fit for a small chunk.
+                        If a small request, try to use last remainder if it is the
+                        only chunk in unsorted bin.    This helps promote locality for
+                        runs of consecutive small requests. This is the only
+                        exception to best-fit, and applies only when there is
+                        no exact fit for a small chunk.
                      */
 
                     if (in_smallbin_range (nb) &&
@@ -3816,14 +3816,14 @@ _int_malloc (mstate av, size_t bytes)
 #endif
                         }
 
-                    /* place chunk in bin */
-
+                    //将unsorted bin中不直接满足分配需求的small chunk放入small bin
                     if (in_smallbin_range (size))
                         {
                             victim_index = smallbin_index (size);
                             bck = bin_at (av, victim_index);
                             fwd = bck->fd;
                         }
+                    //将unsorted bin中不直接满足分配需求的small chunk放入small bin
                     else
                         {
                             victim_index = largebin_index (size);
@@ -3853,11 +3853,10 @@ _int_malloc (mstate av, size_t bytes)
                                             while ((unsigned long) size < chunksize_nomask (fwd))
                                                 {
                                                     fwd = fwd->fd_nextsize;
-			    assert (chunk_main_arena (fwd));
+                                                    assert (chunk_main_arena (fwd));
                                                 }
 
-                                            if ((unsigned long) size
-			    == (unsigned long) chunksize_nomask (fwd))
+                                            if ((unsigned long) size == (unsigned long) chunksize_nomask (fwd))
                                                 /* Always insert in the second position.    */
                                                 fwd = fwd->fd;
                                             else
@@ -3884,12 +3883,12 @@ _int_malloc (mstate av, size_t bytes)
             /* If we've processed as many chunks as we're allowed while
 	 filling the cache, return one of the cached ones.    */
             ++tcache_unsorted_count;
-            if (return_cached
-	    && mp_.tcache_unsorted_limit > 0
-	    && tcache_unsorted_count > mp_.tcache_unsorted_limit)
-	{
-	    return tcache_get (tc_idx);
-	}
+            if (return_cached 
+                && mp_.tcache_unsorted_limit > 0
+                && tcache_unsorted_count > mp_.tcache_unsorted_limit)
+            {
+                return tcache_get (tc_idx);
+            }
 #endif
 
 #define MAX_ITERS             10000
@@ -3898,17 +3897,17 @@ _int_malloc (mstate av, size_t bytes)
                 }
 
 #if USE_TCACHE
-            /* If all the small chunks we found ended up cached, return one now.    */
-            if (return_cached)
+    //完成unsorted bin清理后，若之前遇到了正好合适的chunk并放入了tcache中，则返回此
+    if (return_cached)
 	{
-	    return tcache_get (tc_idx);
+		return tcache_get (tc_idx);
 	}
 #endif
 
             /*
-                 If a large request, scan through the chunks of current bin in
-                 sorted order to find smallest that fits.    Use the skip list for this.
-             */
+                If a large request, scan through the chunks of current bin in
+                sorted order to find smallest that fits.    Use the skip list for this.
+            */
 
             if (!in_smallbin_range (nb))
                 {
@@ -4157,31 +4156,27 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 
     size = chunksize (p);
 
-    /* Little security check which won't hurt performance: the
-         allocator never wrapps around at the end of the address space.
-         Therefore we can exclude some size values which might appear
-         here by accident or by "design" from some intruder.    */
+    //释放chunk指针及大小关系检测(保证chunk尾部不超出最大内存位置)
     if (__builtin_expect ((uintptr_t) p > (uintptr_t) -size, 0)
             || __builtin_expect (misaligned_chunk (p), 0))
         malloc_printerr ("free(): invalid pointer");
-    /* We know that each chunk is at least MINSIZE bytes in size or a
-         multiple of MALLOC_ALIGNMENT.    */
+    //size大小及对齐检测
     if (__glibc_unlikely (size < MINSIZE || !aligned_OK (size)))
         malloc_printerr ("free(): invalid size");
 
     check_inuse_chunk(av, p);
-
+    //从该版本开始，所有符合tcache大小的chunk，在对应tcache bin尚未放满时优先放入到tcache中
 #if USE_TCACHE
     {
         size_t tc_idx = csize2tidx (size);
 
         if (tcache
-	&& tc_idx < mp_.tcache_bins
-	&& tcache->counts[tc_idx] < mp_.tcache_count)
-            {
-	tcache_put (p, tc_idx);
-	return;
-            }
+            && tc_idx < mp_.tcache_bins
+            && tcache->counts[tc_idx] < mp_.tcache_count)
+        {
+            tcache_put (p, tc_idx);
+            return;
+        }
     }
 #endif
 
