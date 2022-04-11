@@ -1401,7 +1401,7 @@ typedef struct malloc_chunk *mbinptr;
 /*
 !unlink过程中的检测
 !1.后一个chunk的prev_size字段和此chunk的size字段是否相对应
-!2.此chunk前后chunk的bk和fd指针是否指向本chunk
+!2.所在bin的双向链表中此chunk前后chunk的bk和fd指针是否指向本chunk
 !3.若此chunk为large chunk，则其前后size指针应相对应
 */
 #define unlink(AV, P, BK, FD) {												\
@@ -4447,6 +4447,8 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 		malloc_printerr ("free(): invalid size");
 
 	check_inuse_chunk(av, p);
+
+//*tcache回收流程
 //若chunk size位于tcache范围内，则检测对应tcache chunk数量是否达到上限，若未，则放入
 #if USE_TCACHE
 	{
@@ -4539,7 +4541,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 			malloc_printerr ("invalid fastbin entry (free)");
 	}
 
-	//*small bin / large bin情况
+//*small bin / large bin情况
 	else if (!chunk_is_mmapped(p))
 	{
 		//单线程则不必加锁，将have_lock设置为true
@@ -4551,7 +4553,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 		//获取与被free的chunk地址上相邻的下一个chunk的地址
 		nextchunk = chunk_at_offset(p, size);
 
-		//!检测被free的chunk的空间是否和此arena的top chunk重叠
+		//!检测被free的chunk的空间是否指向此arena的top chunk
 		if (__glibc_unlikely (p == av->top))
 			malloc_printerr ("double free or corruption (top)");
 		//!检测被free的chunk是否超出arena边界(在arena空间连续的前提下)
@@ -4573,7 +4575,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 
 		//*由于每个进入unsorted bin的chunk都需要进行前后向合并，在每一个chunk被free的时候，其前后最多出现各一个相邻的free chunk
 		//*于是仅需要分别进行一次前后向检测并在可合并时合并即可
-		//前向合并
+	//*前向合并
 		//若相邻地址前一个chunk空闲，则将其从bin中unlink出来，并改变size大小
 		if (!prev_inuse(p))
 		{
