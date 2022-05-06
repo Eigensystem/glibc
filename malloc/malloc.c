@@ -3958,7 +3958,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
   /*
     Consolidate other non-mmapped chunks as they arrive.
   */
-
+//* small chunk & large chunk回收
   else if (!chunk_is_mmapped(p)) {
     if (! have_lock) {
       (void)mutex_lock(&av->mutex);
